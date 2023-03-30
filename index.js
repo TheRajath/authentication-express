@@ -20,6 +20,16 @@ app.set('views', 'views');
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: 'notagoodsecret' }));
 
+const requireLogin = (req, res, next) => {
+
+    if (!req.session.user_id) {
+
+        return res.redirect('/login');
+    }
+
+    next();
+};
+
 app.get('/', (req, res) => {
 
     res.send('HOME PAGE!');
@@ -52,11 +62,11 @@ app.post('/login', async (req, res) => {
 
     const { username, password } = req.body;
 
-    const user = await User.findOne({ username, password });
+    const foundUser = await User.findAndValidate(username, password);
 
-    if (user) {
+    if (foundUser) {
 
-        req.session.user_id = user._id;
+        req.session.user_id = foundUser._id;
 
         res.redirect('/secret');
 
@@ -72,12 +82,7 @@ app.post('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-app.get('/secret', (req, res) => {
-
-    if (!req.session.user_id) {
-
-        return res.redirect('/login');
-    }
+app.get('/secret', requireLogin, (req, res) => {
 
     res.render('secret');
 });

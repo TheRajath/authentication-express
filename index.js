@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('./models/user');
-const bcrypt = require('bcrypt');
 
 const app = express();
 
@@ -32,21 +31,38 @@ app.get('/register', (req, res) => {
 app.post('/register', async (req, res) => {
 
     const { username, password } = req.body;
-    const hash = await bcrypt.hash(password, 12);
 
-    const user = new User({
-        username,
-        password: hash
-    })
+    const user = new User({ username, password })
 
     await user.save();
 
     res.redirect('/');
 });
 
+app.get('/login', (req, res) => {
+
+    res.render('login');
+});
+
+app.post('/login', async (req, res) => {
+
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username, password });
+
+    if (user) {
+
+        res.send("YAY WELCOME!!");
+
+    } else {
+
+        res.send("Incorrect username or password");
+    }
+});
+
 app.get('/secret', (req, res) => {
 
-    res.send('Authentication demo');
+    res.send('THIS IS SECRET!, YOU CANNOT SEE ME UNLESS YOU ARE LOGGED IN!!!');
 });
 
 app.listen(3000, () => {
